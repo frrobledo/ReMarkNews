@@ -5,6 +5,7 @@ from parser import process_rss_feed
 from upload_remarkable import generate_folder, upload_to_tablet
 import requests
 import settings  # Import the settings file
+from summarizer import summarize_article, format_summary
 
 def ensure_correct_text(text):
     return text.replace(' ', '_')
@@ -54,12 +55,23 @@ def main():
     generated_pdfs = []
 
     # Get weather data
+    print('Getting weather data')
     weather_data = get_weather_data()
 
     # Generate PDFs for each source
     for source_name, rss_url in sources.items():
         articles = process_rss_feed(rss_url, hours=24)
+        print(f'Obtained news from {source_name}')
         if articles:
+            if settings.ENABLE_NEWS_SUMMARY:
+                for article in articles:
+                    print(f'Summarizing article {article['title']}')
+                    full_text = ' '.join([item[1] for item in article['full_content'] if item[0] == 'text'])
+                    summary = summarize_article(full_text, model=settings.OLLAMA_MODEL)
+                    if summary:
+                        formatted_summary = format_summary(summary)
+                        article['full_content'].insert(0, ('text', formatted_summary))
+
             output_filename = f"{source_name}-{current_date}"
             output_filename = ensure_correct_text(output_filename)
             generate_pdf({source_name: articles}, output_filename, weather_data)

@@ -86,7 +86,7 @@ def create_latex_document(articles_by_source, image_dir, weather_data):
     Create the LaTeX document content.
     """
     latex_content = [
-        r"\documentclass[18pt,a4paper,twocolumn]{article}",
+        r"\documentclass[12pt,a4paper,twocolumn]{article}",
         r"\usepackage[utf8]{inputenc}",
         r"\usepackage[T1]{fontenc}",
         r"\usepackage{graphicx}",
@@ -96,9 +96,7 @@ def create_latex_document(articles_by_source, image_dir, weather_data):
         r"\usepackage{fancyhdr}",
         r"\usepackage{ragged2e}",
         r"\usepackage{tikz}",
-        r"\usepackage[utf8]{inputenc}",  # Ensure UTF-8 input encoding
-        r"\usepackage{fontspec}",  # For better Unicode support
-        # r"\setmainfont{DejaVu Serif}",  # Use a font with good Unicode coverage
+        r"\usepackage{enumitem}",  # For better control of itemize environments
         r"\pagestyle{fancy}",
         r"\fancyhead{}",
         r"\fancyfoot{}",
@@ -110,14 +108,6 @@ def create_latex_document(articles_by_source, image_dir, weather_data):
         r"\tolerance=1000",
         r"\title{ReMarkNews}",
         fr"\date{{{datetime.now().strftime('%Y-%m-%d')}}}",
-        r"\newcommand{\breakableurl}[1]{%",
-        r"  \begingroup",
-        r"    \fontsize{10}{12}\selectfont",
-        r"    \RaggedRight",
-        r"    \urlstyle{same}",
-        r"    \expandafter\url\expandafter{#1}%",
-        r"  \endgroup",
-        r"}",
         r"\begin{document}",
         r"\fontsize{15}{17}\selectfont",
         r"\maketitle",
@@ -156,36 +146,35 @@ def create_latex_document(articles_by_source, image_dir, weather_data):
             fr"\section{{{escape_latex(source)}}}"
         ])
 
-        for article in articles:
+        for source, articles in articles_by_source.items():
             latex_content.extend([
-                fr"\subsection{{{escape_latex(article['title'])}}}",
-                fr"\textit{{Published: {escape_latex(article['pubDate'])}}}",
-                r"",
-                r"\begin{quote}",
-                escape_latex(article['summary']),
-                r"\end{quote}",
-                r"\noindent\href{" + article['link'] + r"}{\breakableurl{" + escape_latex(article['link']) + r"}}",
-                r"\vspace{0.5em}",
-                r"",
+                fr"\section{{{escape_latex(source)}}}"
             ])
 
-            for item_type, item in article['full_content']:
-                if item_type == 'text':
-                    latex_content.append(escape_latex(item))
-                    latex_content.append(r"")
-                elif item_type == 'image':
-                    local_image_path = download_image(item['url'], image_dir)
-                    if local_image_path:
-                        latex_content.extend([
-                            r"\begin{figure}[htbp]",
-                            r"\centering",
-                            fr"\includegraphics[width=0.8\columnwidth]{{{local_image_path}}}",
-                            fr"\caption{{{escape_latex(item.get('caption', '') or item.get('alt', ''))}}}",
-                            r"\end{figure}",
-                            r""
-                        ])
+            for article in articles:
+                latex_content.extend([
+                    fr"\subsection{{{escape_latex(article['title'])}}}",
+                    fr"\textit{{Published: {escape_latex(article['pubDate'])}}}",
+                    r"",
+                ])
 
-            latex_content.append(r"\newpage")
+                for item_type, item in article['full_content']:
+                    if item_type == 'text':
+                        latex_content.append(item)  # The summary is already formatted in LaTeX
+                        latex_content.append(r"")
+                    elif item_type == 'image':
+                        local_image_path = download_image(item['url'], image_dir)
+                        if local_image_path:
+                            latex_content.extend([
+                                r"\begin{figure}[htbp]",
+                                r"\centering",
+                                fr"\includegraphics[width=0.8\columnwidth]{{{local_image_path}}}",
+                                fr"\caption{{{escape_latex(item.get('caption', '') or item.get('alt', ''))}}}",
+                                r"\end{figure}",
+                                r""
+                            ])
+
+                latex_content.append(r"\newpage")
 
     latex_content.append(r"\end{document}")
 
@@ -221,8 +210,8 @@ def generate_pdf(articles_by_source, output_filename, weather_data):
     shutil.rmtree(image_dir, ignore_errors=True)
 
     # Remove the .tex file
-    # if os.path.exists(tex_filename):
-    #     os.remove(tex_filename)
+    if os.path.exists(tex_filename):
+        os.remove(tex_filename)
     
     print(f"PDF created successfully: {output_filename}.pdf")
     print("Temporary files and images have been cleaned up.")

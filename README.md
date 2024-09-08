@@ -104,7 +104,3 @@ For a complete list of Python dependencies, see `requirements.txt`.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-[Specify your license here]
