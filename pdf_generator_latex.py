@@ -108,7 +108,7 @@ def create_latex_document(articles_by_source, image_dir, weather_data):
         r"\setlength{\columnsep}{1cm}",
         r"\setlength{\emergencystretch}{3em}",
         r"\tolerance=1000",
-        r"\title{Daily News Summary}",
+        r"\title{ReMarkNews}",
         fr"\date{{{datetime.now().strftime('%Y-%m-%d')}}}",
         r"\newcommand{\breakableurl}[1]{%",
         r"  \begingroup",

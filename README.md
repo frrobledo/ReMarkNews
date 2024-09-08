@@ -1,4 +1,4 @@
-# Daily News Summary Generator
+# ReMarkNews
 
 This project generates a daily news summary PDF from various RSS feeds and uploads it to a ReMarkable tablet. It includes weather information for a specified location.
 
@@ -6,8 +6,8 @@ This project generates a daily news summary PDF from various RSS feeds and uploa
 
 1. Clone the repository:
    ```
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/frrobledo/ReMarkNews.git
+   cd ReMarkNews
    ```
 
 2. Create and activate a virtual environment:
