@@ -1,0 +1,12 @@
+*.pdf
+.venv/*
+*.aux
+*.log
+*.out
+*.toc
+*.tex
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.pyc
+settings.py
