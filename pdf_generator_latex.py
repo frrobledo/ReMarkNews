@@ -81,15 +81,41 @@ def get_weather_data(api_key, lat, lon):
     else:
         return None
 
-def create_latex_document(articles_by_source, image_dir, weather_data):
+def create_latex_document(articles_by_source, image_dir, weather_data, font_option="default"):
     """
     Create the LaTeX document content.
     """
+    font_packages = {
+        "default": [
+            r"\usepackage{helvet}",
+            r"\renewcommand{\familydefault}{\sfdefault}"
+        ],
+        "libertinus": [
+            r"\usepackage{libertinus}",
+            r"\usepackage[libertinus]{newtxmath}"
+        ],
+        "source": [
+            r"\usepackage[default]{sourcesanspro}",
+            r"\usepackage[scale=0.95]{sourceserifpro}"
+        ],
+        "roboto": [
+            r"\usepackage[sfdefault]{roboto}",
+            r"\usepackage[scale=0.95]{roboto-slab}"
+        ],
+        "noto": [
+            r"\usepackage{noto-sans}",
+            r"\usepackage{noto-serif}"
+        ]
+    }
+
+    chosen_font = font_packages.get(font_option, font_packages["default"])
+
     latex_content = [
         r"\documentclass[12pt,a4paper,twocolumn]{article}",
         r"\usepackage[utf8]{inputenc}",
         r"\usepackage[T1]{fontenc}",
-        r"\usepackage{graphicx}",
+            ] + chosen_font + [
+        r"\usepackage{graphicx}",        
         r"\usepackage{hyperref}",
         r"\usepackage{url}",
         r"\usepackage[margin=1in]{geometry}",
@@ -106,7 +132,7 @@ def create_latex_document(articles_by_source, image_dir, weather_data):
         r"\setlength{\columnsep}{1cm}",
         r"\setlength{\emergencystretch}{3em}",
         r"\tolerance=1000",
-        r"\title{ReMarkNews}",
+        r"\title{\Huge\textbf{ReMarkNews}}",  # Increased title size
         fr"\date{{{datetime.now().strftime('%Y-%m-%d')}}}",
         r"\begin{document}",
         r"\fontsize{15}{17}\selectfont",
@@ -180,7 +206,7 @@ def create_latex_document(articles_by_source, image_dir, weather_data):
 
     return '\n'.join(latex_content)
 
-def generate_pdf(articles_by_source, output_filename, weather_data):
+def generate_pdf(articles_by_source, output_filename, weather_data, font='default'):
     """
     Generate the PDF using LaTeX.
     """
@@ -188,7 +214,8 @@ def generate_pdf(articles_by_source, output_filename, weather_data):
     image_dir = "images"
     os.makedirs(image_dir, exist_ok=True)
     
-    latex_content = create_latex_document(articles_by_source, image_dir, weather_data)
+    # Available fonts: libertinus, source, roboto, noto
+    latex_content = create_latex_document(articles_by_source, image_dir, weather_data, font_option=font)
     
     # Write LaTeX content to a .tex file
     tex_filename = f"{output_filename.replace(' ', '_')}.tex"

@@ -6,3 +6,9 @@ WEATHER_LAT = 40.4168  # Example: Madrid
 WEATHER_LON = -3.7038  # Example: Madrid
 
 # Add any other configuration settings here
+# News summary settings
+ENABLE_NEWS_SUMMARY = True  # Set to True to enable news summaries
+OLLAMA_MODEL = "llama3.1"  # Specify the Ollama model to use
+
+# Use a different font: "default" (Helvetica), "libertinus", "source", "roboto", "noto"
+font= "default"

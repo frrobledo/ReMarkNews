@@ -74,7 +74,7 @@ def main():
 
             output_filename = f"{source_name}-{current_date}"
             output_filename = ensure_correct_text(output_filename)
-            generate_pdf({source_name: articles}, output_filename, weather_data)
+            generate_pdf({source_name: articles}, output_filename, weather_data, settings.font)
             generated_pdfs.append(f"{output_filename}.pdf")
             print(f'Generated PDF {output_filename}')
             print('-'*10)
