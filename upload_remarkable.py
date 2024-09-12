@@ -21,4 +21,3 @@ def generate_folder(new_folder, main_folder='/news/'):
     except subprocess.CalledProcessError as e:
         print(f"Failed to create folder {new_folder} to ReMarkable: {e}")
         return False
-    

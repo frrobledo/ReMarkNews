@@ -64,3 +64,18 @@ def format_summary(summary):
     formatted_summary += "\\end{itemize}\n\n"
     
     return formatted_summary
+
+def format_summary_epub(summary):
+    """
+    Format the summary with an "AI Summary" header in HTML for EPUB.
+    
+    :param summary: The bullet-point summary
+    :return: Formatted summary with header, ready for EPUB
+    """
+    formatted_summary = "<h3>AI Summary:</h3>\n<ul>\n"
+    for line in summary.split('\n'):
+        if line.strip().startswith('-'):
+            formatted_summary += f"<li>{line.strip()[1:].strip()}</li>\n"
+    formatted_summary += "</ul>\n"
+    
+    return formatted_summary
