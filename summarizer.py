@@ -1,7 +1,6 @@
 import requests
-import json
 
-def summarize_article(text, model="llama2:8b"):
+def summarize_article(text, model="llama3.1:8b"):
     """
     Summarize the given article text using Ollama.
     
@@ -30,10 +29,34 @@ def summarize_article(text, model="llama2:8b"):
         )
         response.raise_for_status()
         result = response.json()
-        return result['response'].strip()
+        summary = result['response'].strip()
+        
+        # Ensure the summary is in the correct format
+        formatted_summary = format_bullet_points(summary)
+        
+        return formatted_summary
     except requests.RequestException as e:
         print(f"Error while summarizing article: {e}")
         return None
+
+def format_bullet_points(text):
+    """
+    Ensure the summary is formatted as bullet points.
+    """
+    lines = text.split('\n')
+    formatted_lines = []
+    for line in lines:
+        line = line.strip()
+        if line and not line.startswith('-'):
+            line = f"- {line}"
+        formatted_lines.append(line)
+    
+    # Ensure we have at least 3 and at most 5 bullet points
+    # while len(formatted_lines) < 3:
+    #     formatted_lines.append("- Additional information not provided.")
+    # formatted_lines = formatted_lines[:5]
+    
+    return '\n'.join(formatted_lines)
 
 def format_summary(summary):
     """
