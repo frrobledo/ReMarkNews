@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from epub_generator import generate_epub  # Import the new EPUB generator
 from parser import process_rss_feed
@@ -48,6 +49,10 @@ def get_weather_data():
     return None
 
 def main():
+    # Create output folder if it doesn't exist
+    output_folder = "output"
+    os.makedirs(output_folder, exist_ok=True)
+
     # Read sources from JSON file
     with open('sources.json', 'r') as f:
         sources = json.load(f)
@@ -70,12 +75,13 @@ def main():
                     full_text = ' '.join([item[1] for item in article['full_content'] if item[0] == 'text'])
                     summary = summarize_article(full_text, model=settings.OLLAMA_MODEL)
                     if summary:
-                        formatted_summary = format_summary_epub(summary)  # Use the new EPUB formatting function
+                        formatted_summary = format_summary_epub(summary)
                         article['full_content'].insert(0, ('text', formatted_summary))
 
             output_filename = f"{source_name}-{current_date}"
             output_filename = ensure_correct_text(output_filename)
-            epub_path = generate_epub({source_name: articles}, output_filename, weather_data)
+            output_path = os.path.join(output_folder, output_filename)
+            epub_path = generate_epub({source_name: articles}, output_path, weather_data)
             generated_epubs.append(epub_path)
             print(f'Generated EPUB {output_filename}')
             print('-'*10)
@@ -93,6 +99,7 @@ def main():
             upload_to_tablet(epub, remarkable_folder)
     else:
         print("Failed to create folder in ReMarkable tablet. EPUBs were not uploaded.")
+
 
 
 

@@ -206,32 +206,33 @@ def create_latex_document(articles_by_source, image_dir, weather_data, font_opti
 
     return '\n'.join(latex_content)
 
-def generate_pdf(articles_by_source, output_filename, weather_data, font='default'):
+def generate_pdf(articles_by_source, output_path, weather_data, font='default'):
     """
     Generate the PDF using LaTeX.
     """
     # Create images directory
-    image_dir = "images"
+    image_dir = os.path.join(os.path.dirname(output_path), "images")
     os.makedirs(image_dir, exist_ok=True)
     
     # Available fonts: libertinus, source, roboto, noto
     latex_content = create_latex_document(articles_by_source, image_dir, weather_data, font_option=font)
     
     # Write LaTeX content to a .tex file
-    tex_filename = f"{output_filename.replace(' ', '_')}.tex"
+    tex_filename = f"{output_path}.tex"
     with open(tex_filename, 'w', encoding='utf-8') as tex_file:
         tex_file.write(latex_content)
     
     # Compile LaTeX to PDF
-    os.system(f"xelatex -interaction=nonstopmode {tex_filename}")
+    os.system(f"xelatex -interaction=nonstopmode -output-directory={os.path.dirname(output_path)} {tex_filename}")
     
     # Run twice to generate the table of contents
-    os.system(f"xelatex -interaction=nonstopmode {tex_filename}")
+    os.system(f"xelatex -interaction=nonstopmode -output-directory={os.path.dirname(output_path)} {tex_filename}")
     
     # Clean up auxiliary files
     for ext in ['.aux', '.log', '.out', '.toc']:
-        if os.path.exists(f"{output_filename}{ext}"):
-            os.remove(f"{output_filename}{ext}")
+        aux_file = f"{output_path}{ext}"
+        if os.path.exists(aux_file):
+            os.remove(aux_file)
     
     # Remove the images directory
     shutil.rmtree(image_dir, ignore_errors=True)
@@ -240,7 +241,7 @@ def generate_pdf(articles_by_source, output_filename, weather_data, font='defaul
     if os.path.exists(tex_filename):
         os.remove(tex_filename)
     
-    print(f"PDF created successfully: {output_filename}.pdf")
+    print(f"PDF created successfully: {output_path}.pdf")
     print("Temporary files and images have been cleaned up.")
 
 if __name__ == "__main__":

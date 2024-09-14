@@ -39,7 +39,7 @@ def create_chapter(title, content, file_name):
     chapter.content = f'<h1>{title}</h1>\n{content}'
     return chapter
 
-def generate_epub(articles_by_source, output_filename, weather_data):
+def generate_epub(articles_by_source, output_path, weather_data):
     """Generate an EPUB file from the articles and weather data."""
     book = epub.EpubBook()
 
@@ -131,11 +131,9 @@ def generate_epub(articles_by_source, output_filename, weather_data):
         book.spine = ['nav'] + chapters
 
         # Write EPUB file
-        epub_path = f"{output_filename}.epub"
-        epub.write_epub(epub_path, book, {})
+        epub_filename = f"{output_path}.epub"
+        epub.write_epub(epub_filename, book, {})
 
-        print(f"EPUB created successfully: {epub_path}")
+        print(f"EPUB created successfully: {epub_filename}")
 
-    # The temporary directory and its contents are automatically deleted here
-
-    return epub_path
+    return epub_filename

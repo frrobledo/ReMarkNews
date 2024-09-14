@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from pdf_generator_latex import generate_pdf
 from parser import process_rss_feed
@@ -47,6 +48,10 @@ def get_weather_data():
     return None
 
 def main():
+    # Create output folder if it doesn't exist
+    output_folder = "output"
+    os.makedirs(output_folder, exist_ok=True)
+
     # Read sources from JSON file
     with open('sources.json', 'r') as f:
         sources = json.load(f)
@@ -74,8 +79,9 @@ def main():
 
             output_filename = f"{source_name}-{current_date}"
             output_filename = ensure_correct_text(output_filename)
-            generate_pdf({source_name: articles}, output_filename, weather_data, settings.font)
-            generated_pdfs.append(f"{output_filename}.pdf")
+            output_path = os.path.join(output_folder, output_filename)
+            generate_pdf({source_name: articles}, output_path, weather_data, settings.font)
+            generated_pdfs.append(f"{output_path}.pdf")
             print(f'Generated PDF {output_filename}')
             print('-'*10)
         else:
@@ -91,6 +97,7 @@ def main():
             upload_to_tablet(pdf, remarkable_folder)
     else:
         print("Failed to create folder in ReMarkable tablet. PDFs were not uploaded.")
+
 
 if __name__ == "__main__":
     main()
