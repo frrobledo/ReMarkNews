@@ -84,10 +84,70 @@ def is_high_quality_image(url, min_width=300, min_height=200):
     width, height = get_image_size(url)
     return width >= min_width and height >= min_height
 
+# def extract_article_all(url):
+#     """
+#     Extract the main article text and image URLs from a given URL,
+#     maintaining the relative positioning of images within the text.
+#     """
+#     try:
+#         # Fetch the webpage
+#         response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+#         response.raise_for_status()
+        
+#         # Parse the HTML content
+#         soup = BeautifulSoup(response.text, 'html.parser')
+        
+#         # Remove script and style elements
+#         for script in soup(["script", "style"]):
+#             script.decompose()
+        
+#         # Find the main content
+#         main_content = soup.find('article') or soup.find('main') or soup.find('div', class_=re.compile('(content|article)'))
+        
+#         if not main_content:
+#             main_content = soup  # Fallback to entire body if no main content is identified
+        
+#         # Extract text and images, maintaining order
+#         content = []
+#         for element in main_content.descendants:
+#             if element.name == 'p':
+#                 text = element.get_text().strip()
+#                 if text:
+#                     content.append(('text', text))
+#             elif element.name == 'img':
+#                 src = extract_image_url(element, url)
+#                 alt = element.get('alt', '')
+#                 caption = element.find_next('figcaption')
+#                 caption_text = caption.get_text().strip() if caption else ''
+                
+#                 if src and is_high_quality_image(src) and (alt or caption_text):
+#                     content.append(('image', {'url': src, 'alt': alt, 'caption': caption_text}))
+        
+#         # Combine text elements for readability
+#         combined_content = []
+#         current_text = []
+#         for item_type, item in content:
+#             if item_type == 'text':
+#                 current_text.append(item)
+#             else:  # image
+#                 if current_text:
+#                     combined_content.append(('text', ' '.join(current_text)))
+#                     current_text = []
+#                 combined_content.append((item_type, item))
+#         if current_text:
+#             combined_content.append(('text', ' '.join(current_text)))
+        
+#         return combined_content
+
+#     except requests.RequestException as e:
+#         print(f"Error fetching or parsing the webpage: {e}")
+#         return None
+
+
 def extract_article_all(url):
     """
     Extract the main article text and image URLs from a given URL,
-    maintaining the relative positioning of images within the text.
+    maintaining the relative positioning of images within the text and preserving paragraph structure.
     """
     try:
         # Fetch the webpage
@@ -107,14 +167,29 @@ def extract_article_all(url):
         if not main_content:
             main_content = soup  # Fallback to entire body if no main content is identified
         
-        # Extract text and images, maintaining order
+        # Extract text and images, maintaining order and paragraph structure
         content = []
+        current_paragraph = []
+        
         for element in main_content.descendants:
             if element.name == 'p':
+                if current_paragraph:
+                    content.append(('text', '\n\n'.join(current_paragraph)))
+                    current_paragraph = []
                 text = element.get_text().strip()
                 if text:
-                    content.append(('text', text))
+                    current_paragraph.append(text)
+            elif element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                if current_paragraph:
+                    content.append(('text', '\n\n'.join(current_paragraph)))
+                    current_paragraph = []
+                text = element.get_text().strip()
+                if text:
+                    content.append(('text', f"\n\n{text}\n"))
             elif element.name == 'img':
+                if current_paragraph:
+                    content.append(('text', '\n\n'.join(current_paragraph)))
+                    current_paragraph = []
                 src = extract_image_url(element, url)
                 alt = element.get('alt', '')
                 caption = element.find_next('figcaption')
@@ -123,21 +198,11 @@ def extract_article_all(url):
                 if src and is_high_quality_image(src) and (alt or caption_text):
                     content.append(('image', {'url': src, 'alt': alt, 'caption': caption_text}))
         
-        # Combine text elements for readability
-        combined_content = []
-        current_text = []
-        for item_type, item in content:
-            if item_type == 'text':
-                current_text.append(item)
-            else:  # image
-                if current_text:
-                    combined_content.append(('text', ' '.join(current_text)))
-                    current_text = []
-                combined_content.append((item_type, item))
-        if current_text:
-            combined_content.append(('text', ' '.join(current_text)))
+        # Add any remaining paragraph text
+        if current_paragraph:
+            content.append(('text', '\n\n'.join(current_paragraph)))
         
-        return combined_content
+        return content
 
     except requests.RequestException as e:
         print(f"Error fetching or parsing the webpage: {e}")

@@ -27,7 +27,8 @@ def download_image(url, temp_dir):
         temp_path = os.path.join(temp_dir, image_filename)
         with open(temp_path, 'wb') as f:
             f.write(response.content)
-        
+        print('Downloaded image:', image_filename)
+
         return image_filename
     except requests.RequestException as e:
         print(f"Error downloading image {url}: {e}")
@@ -79,7 +80,10 @@ def generate_epub(articles_by_source, output_path, weather_data):
                 
                 for item_type, item in article['full_content']:
                     if item_type == 'text':
-                        article_html += f"<p>{item}</p>"
+                        # Split the text into paragraphs and wrap each in <p> tags
+                        paragraphs = item.split('\n\n')  # Assuming paragraphs are separated by blank lines
+                        for paragraph in paragraphs:
+                            article_html += f"<p>{paragraph.strip()}</p>"
                     elif item_type == 'image':
                         image_filename = download_image(item['url'], temp_dir)
                         if image_filename:
