@@ -8,15 +8,23 @@ def summarize_article(text, model="llama3.1:8b"):
     :param model: The Ollama model to use (default: "llama2:8b")
     :return: A bullet-point summary of the article
     """
-    prompt = f"""INSTRUCTION: Summarize the following article in 3-5 bullet points. 
-    Each bullet point should be a single sentence. Do not use nested bullet points or sub-points. 
-    Start each bullet point with a dash (-) followed by a space.
-    Only consider the article text provided below and nothing else.
+    prompt = f"""INSTRUCTION: You are an AI summarizer. You only summarize articles in bullet points. You do not output any other text. Each bullet point should be a single sentence. Do not use nested bullet points or subpoints. Start each bullet point with a dash (-) followed by a space.
+    Only consider the article text provided below and nothing else. 
 
     ARTICLE TEXT:
     {text}
 
     SUMMARY:"""
+
+    # prompt = f"""INSTRUCTION: Summarize the following article in 3-5 bullet points. 
+    # Each bullet point should be a single sentence. Do not use nested bullet points or sub-points. 
+    # Start each bullet point with a dash (-) followed by a space.
+    # Only consider the article text provided below and nothing else.
+
+    # ARTICLE TEXT:
+    # {text}
+
+    # SUMMARY:"""
     
     try:
         response = requests.post(
