@@ -71,7 +71,7 @@ def main():
         if articles:
             if settings.ENABLE_NEWS_SUMMARY:
                 for article in articles:
-                    print(f'Summarizing article {article['title']}')
+                    print(f"Summarizing article {article['title']}")
                     full_text = ' '.join([item[1] for item in article['full_content'] if item[0] == 'text'])
                     summary = summarize_article(full_text, model=settings.OLLAMA_MODEL)
                     if summary:
