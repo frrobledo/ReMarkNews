@@ -97,7 +97,8 @@ def generate_epub(articles_by_source, output_path, weather_data):
                             book.add_item(book_image)
                             
                             # Add image to the HTML content
-                            article_html += f'<p><img src="images/{image_filename}" alt="{item['alt']}"/></p>'
+                            article_html += f"<p><img src='images/{image_filename}' alt='{item['alt']}'/></p>"
+                            # article_html += f'<p><img src="images/{image_filename}" alt="{item['alt']}"/></p>'
                             if item.get('caption'):
                                 article_html += f"<p><i>{item['caption']}</i></p>"
                         else:
