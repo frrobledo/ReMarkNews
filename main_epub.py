@@ -7,7 +7,7 @@ from upload_remarkable import generate_folder, upload_to_tablet
 import requests
 import settings
 from summarizer import summarize_article, format_summary_epub
-
+import sys
 
 def ensure_correct_text(text):
     return text.replace(' ', '_')
@@ -48,7 +48,7 @@ def get_weather_data():
         print(f"Error fetching weather data: {e}")
     return None
 
-def main():
+def main(upload=False):
     # Create output folder if it doesn't exist
     output_folder = "output"
     os.makedirs(output_folder, exist_ok=True)
@@ -89,20 +89,28 @@ def main():
             print(f"No articles found for {source_name} in the last 24 hours.")
 
     print('All EPUBs generated')
-    # Create folder in ReMarkable tablet
-    remarkable_folder = f"/news/{current_date}/epub"
-    if generate_folder(current_date):
-        generate_folder("epub", f"news/{current_date}/")
-        # Upload EPUBs to ReMarkable tablet
-        for epub in generated_epubs:
-            print(f'Uploading {epub}')
-            upload_to_tablet(epub, remarkable_folder)
-    else:
-        print("Failed to create folder in ReMarkable tablet. EPUBs were not uploaded.")
+    if upload:
+        # Create folder in ReMarkable tablet
+        remarkable_folder = f"/news/{current_date}/epub"
+        if generate_folder(current_date):
+            generate_folder("epub", f"news/{current_date}/")
+            # Upload EPUBs to ReMarkable tablet
+            for epub in generated_epubs:
+                print(f'Uploading {epub}')
+                upload_to_tablet(epub, remarkable_folder)
+        else:
+            print("Failed to create folder in ReMarkable tablet. EPUBs were not uploaded.")
 
 
 
 
 
 if __name__ == "__main__":
-    main()
+    # Check if --upload flag is provided
+    upload = False
+    if len(sys.argv) > 1 and sys.argv[1] == '--upload':
+        upload = True
+        print('Uploading EPUBs to ReMarkable tablet')
+    else:
+        print('Generating EPUBs locally')
+    main(upload=upload)

@@ -7,6 +7,7 @@ from upload_remarkable import generate_folder, upload_to_tablet
 import requests
 import settings  # Import the settings file
 from summarizer import summarize_article, format_summary
+import sys
 
 def ensure_correct_text(text):
     return text.replace(' ', '_')
@@ -47,7 +48,7 @@ def get_weather_data():
         print(f"Error fetching weather data: {e}")
     return None
 
-def main():
+def main(upload=False):
     # Create output folder if it doesn't exist
     output_folder = "output"
     os.makedirs(output_folder, exist_ok=True)
@@ -88,16 +89,24 @@ def main():
             print(f"No articles found for {source_name} in the last 24 hours.")
 
     print('All PDFs generated')
-    # Create folder in ReMarkable tablet
-    remarkable_folder = f"/news/{current_date}"
-    if generate_folder(current_date):
-        # Upload PDFs to ReMarkable tablet
-        for pdf in generated_pdfs:
-            print(f'Uploading {pdf}')
-            upload_to_tablet(pdf, remarkable_folder)
-    else:
-        print("Failed to create folder in ReMarkable tablet. PDFs were not uploaded.")
+    if upload:
+        # Create folder in ReMarkable tablet
+        remarkable_folder = f"/news/{current_date}"
+        if generate_folder(current_date):
+            # Upload PDFs to ReMarkable tablet
+            for pdf in generated_pdfs:
+                print(f'Uploading {pdf}')
+                upload_to_tablet(pdf, remarkable_folder)
+        else:
+            print("Failed to create folder in ReMarkable tablet. PDFs were not uploaded.")
 
 
 if __name__ == "__main__":
-    main()
+    # Check for --upload flag
+    upload = False
+    if len(sys.argv) > 1 and sys.argv[1] == '--upload':
+        upload = True
+        print('Uploading PDFs to ReMarkable tablet')
+    else:
+        print('Generating PDFs locally')
+    main(upload=upload)
