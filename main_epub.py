@@ -7,6 +7,8 @@ from upload_remarkable import generate_folder, upload_to_tablet
 import requests
 import settings
 from summarizer import summarize_article, format_summary_epub
+from email_sender import send_epub_email
+# from email_sender import send_email_with_attachment
 import sys
 
 def ensure_correct_text(text):
@@ -48,7 +50,7 @@ def get_weather_data():
         print(f"Error fetching weather data: {e}")
     return None
 
-def main(upload=False):
+def main(upload_remarkable=False, upload_email=False):
     # Create output folder if it doesn't exist
     output_folder = "output"
     os.makedirs(output_folder, exist_ok=True)
@@ -81,7 +83,7 @@ def main(upload=False):
             output_filename = f"{source_name}-{current_date}"
             output_filename = ensure_correct_text(output_filename)
             output_path = os.path.join(output_folder, output_filename)
-            epub_path = generate_epub({source_name: articles}, output_path, weather_data)
+            epub_path = generate_epub({source_name: articles}, output_path, weather_data, use_images=False if upload_email else True)
             generated_epubs.append(epub_path)
             print(f'Generated EPUB {output_filename}')
             print('-'*10)
@@ -89,7 +91,7 @@ def main(upload=False):
             print(f"No articles found for {source_name} in the last 24 hours.")
 
     print('All EPUBs generated')
-    if upload:
+    if upload_remarkable:
         # Create folder in ReMarkable tablet
         remarkable_folder = f"/news/{current_date}/epub"
         if generate_folder(current_date):
@@ -101,16 +103,30 @@ def main(upload=False):
         else:
             print("Failed to create folder in ReMarkable tablet. EPUBs were not uploaded.")
 
+    if upload_email:
+        for epub in generated_epubs:
+            print(f'Sending {epub} through email')
+            try:
+                # send_email_with_attachment(message=settings.EMAIL_BODY, sender=settings.EMAIL_SENDER, receivers=[settings.EMAIL_RECEIVER], password=settings.EMAIL_PASSWORD, pdf_path=epub, subject=settings.EMAIL_SUBJECT, type='epub')
+                send_epub_email(sender_email=settings.EMAIL_SENDER, sender_password=settings.EMAIL_PASSWORD, recipient_email=settings.EMAIL_RECEIVER, subject=settings.EMAIL_SUBJECT, body=settings.EMAIL_BODY, epub_path=epub)
+                print(f'Successfully sent {epub} through email')
+            except Exception as e:
+                print(f"Error sending email: {e}")
+
 
 
 
 
 if __name__ == "__main__":
     # Check if --upload flag is provided
-    upload = False
+    upload = False  # Send through remarkable api
+    upload_email = False  # Send through email
     if len(sys.argv) > 1 and sys.argv[1] == '--upload':
         upload = True
         print('Uploading EPUBs to ReMarkable tablet')
+    elif len(sys.argv) > 1 and sys.argv[1] == '--email':
+        upload_email = True
+        print('Sending EPUBs through email')
     else:
         print('Generating EPUBs locally')
-    main(upload=upload)
+    main(upload_remarkable=upload, upload_email=upload_email)

@@ -40,15 +40,21 @@ def create_chapter(title, content, file_name):
     chapter.content = f'<h1>{title}</h1>\n{content}'
     return chapter
 
-def generate_epub(articles_by_source, output_path, weather_data):
+def generate_epub(articles_by_source, output_path, weather_data, use_images=True):
     """Generate an EPUB file from the articles and weather data."""
     book = epub.EpubBook()
+
+    source_name = articles_by_source.keys()
+    source_name = ', '.join(source_name)
+    current_date = datetime.now().strftime('%d-%m-%Y')
+    # current_date = datetime.now().strftime('%Y-%m-%d')
+    source_name = f'{source_name} - {current_date}'
 
     # Create a temporary directory for images
     with tempfile.TemporaryDirectory() as temp_dir:
         # Set metadata
         book.set_identifier(f'ReMarkNews-{datetime.now().strftime("%Y%m%d")}')
-        book.set_title('ReMarkNews')
+        book.set_title(source_name)
         book.set_language('en')
         book.add_author('ReMarkNews Generator')
 
@@ -84,7 +90,7 @@ def generate_epub(articles_by_source, output_path, weather_data):
                         paragraphs = item.split('\n\n')  # Assuming paragraphs are separated by blank lines
                         for paragraph in paragraphs:
                             article_html += f"<p>{paragraph.strip()}</p>"
-                    elif item_type == 'image':
+                    elif item_type == 'image' and use_images:
                         image_filename = download_image(item['url'], temp_dir)
                         if image_filename:
                             # Add image to the book

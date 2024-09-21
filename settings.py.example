@@ -12,3 +12,10 @@ OLLAMA_MODEL = "llama3.1"  # Specify the Ollama model to use
 
 # Use a different font: "default" (Helvetica), "libertinus", "source", "roboto", "noto"
 font= "default"
+
+# email settings
+EMAIL_sender = "your_email"
+EMAIL_receiver = "your_email"
+EMAIL_password = "your_email_password"
+EMAIL_subject = "Your Email Subject"
+EMAIL_body = "Your Email Body"

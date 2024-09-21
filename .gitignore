@@ -12,3 +12,4 @@
 settings.py
 venv/
 *.epub
+.vscode/*
