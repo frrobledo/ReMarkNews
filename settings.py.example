@@ -19,6 +19,3 @@ EMAIL_receiver = "your_email"
 EMAIL_password = "your_email_password"
 EMAIL_subject = "Your Email Subject"
 EMAIL_body = "Your Email Body"
-
-# dropbox settings
-DROPBOX_ACCESS_TOKEN = "Dropbox_token"

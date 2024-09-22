@@ -8,7 +8,7 @@ import requests
 import settings
 from summarizer import summarize_article, format_summary_epub
 from email_sender import send_epub_email
-from dropbox_sender import upload_epub_to_dropbox
+# from email_sender import send_email_with_attachment
 import sys
 
 def ensure_correct_text(text):
@@ -50,7 +50,7 @@ def get_weather_data():
         print(f"Error fetching weather data: {e}")
     return None
 
-def main(upload_remarkable=False, upload_email=False, upload_dropbox=False):
+def main(upload_remarkable=False, upload_email=False):
     # Create output folder if it doesn't exist
     output_folder = "output"
     os.makedirs(output_folder, exist_ok=True)
@@ -112,15 +112,6 @@ def main(upload_remarkable=False, upload_email=False, upload_dropbox=False):
                 print(f'Successfully sent {epub} through email')
             except Exception as e:
                 print(f"Error sending email: {e}")
-    
-    if upload_dropbox:
-        for epub in generated_epubs:
-            print(f'Uploading {epub} to Dropbox')
-            try:
-                upload_epub_to_dropbox(epub)
-                print(f'Successfully uploaded {epub} to Dropbox')
-            except Exception as e:
-                print(f"Error uploading to Dropbox: {e}")
 
 
 
@@ -130,16 +121,12 @@ if __name__ == "__main__":
     # Check if --upload flag is provided
     upload = False  # Send through remarkable api
     upload_email = False  # Send through email
-    upload_dropbox = False  # Send through dropbox
     if len(sys.argv) > 1 and sys.argv[1] == '--upload':
         upload = True
         print('Uploading EPUBs to ReMarkable tablet')
     elif len(sys.argv) > 1 and sys.argv[1] == '--email':
         upload_email = True
         print('Sending EPUBs through email')
-    elif len(sys.argv) > 1 and sys.argv[1] == '--dropbox':
-        upload_dropbox = True
-        print('Uploading EPUBs to Dropbox')
     else:
         print('Generating EPUBs locally')
-    main(upload_remarkable=upload, upload_email=upload_email, upload_dropbox=upload_dropbox)
+    main(upload_remarkable=upload, upload_email=upload_email)
