@@ -23,3 +23,4 @@ EMAIL_body = "Your Email Body"
 # SSH settings
 REMARKABLE_SSH_HOST = "IP_ADDRESS"
 REMARKABLE_SSH_PASSWORD = "password"
+MOUNT_POINT = "$HOME/remarkable"  # change for home directory + /remarkable

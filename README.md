@@ -2,6 +2,8 @@
 
 ReMarkNews is a Python application that generates daily news digests in PDF or EPUB format, optionally summarizes articles using AI, and sends them to your reMarkable tablet or email.
 
+This project uses the [PDF2RM.sh](https://www.ucl.ac.uk/~ucecesf/remarkable/) script to send the generated files to the reMarkable tablet using SSH, by preparing the PDF files for the reMarkable tablet.
+
 ## Features
 
 - Fetches news articles from RSS feeds
