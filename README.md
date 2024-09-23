@@ -1,114 +1,127 @@
 # ReMarkNews
 
-This project generates a daily news summary PDF from various RSS feeds and uploads it to a ReMarkable tablet. It includes weather information for a specified location.
+ReMarkNews is a Python application that generates daily news digests in PDF or EPUB format, optionally summarizes articles using AI, and sends them to your reMarkable tablet or email.
 
-## Disclaimer
-Due to changes in the Remarkable Cloud API, direct upload to the Remarkable tablet is not possible. By default, this feature has been disabled. To enable it, use flag `--upload`
-```
-python main.py --upload
-python main_epub.py --upload
-```
+## Features
 
-## Setup
+- Fetches news articles from RSS feeds
+- Generates PDF or EPUB files with article content and images
+- Optionally summarizes articles using AI (Ollama)
+- Includes weather information
+- Sends generated files to reMarkable tablet or email
+
+## Prerequisites
+
+- Python 3.7+
+- LaTeX distribution (for PDF generation)
+- Ollama (optional, for AI summaries)
+- reMarkable tablet (optional)
+
+## Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/frrobledo/ReMarkNews.git
+   git clone https://github.com/frrobledo/ReMarkNews
    cd ReMarkNews
    ```
 
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   ```
-
-3. Install the required packages:
+2. Install required Python packages:
    ```
    pip install -r requirements.txt
    ```
 
-4. Install LaTeX and XeLaTeX:
-   - This project requires a LaTeX distribution with XeLaTeX for PDF compilation.
-   - For Ubuntu/Debian:
-     ```
-     sudo apt-get install texlive-xetex
-     ```
-   - For macOS (using Homebrew):
-     ```
-     brew install --cask mactex
-     ```
-   - For Windows, install MiKTeX or TeX Live, which include XeLaTeX.
+3. This project requires a LaTeX distribution with XeLaTeX for PDF compilation.
 
-5. Set up OpenWeatherMap API:
-   - Sign up for a free account at [OpenWeatherMap](https://openweathermap.org/)
-   - Get your API key from the dashboard
-   - Copy `settings.py.example` to `settings.py`
-   - Update `settings.py` with your API key and desired coordinates:
-     ```python
-     OPENWEATHER_API_KEY = "your_api_key_here"
-     WEATHER_LAT = 40.4168  # Example: Madrid
-     WEATHER_LON = -3.7038  # Example: Madrid
-     ```
+4. (Optional) Install [Ollama](https://ollama.com/) if you want to use AI summaries.
 
-6. Install and set up rmapi:
-   - Follow the installation instructions at [rmapi GitHub repository](https://github.com/juruen/rmapi)
-   - Run `rmapi` and follow the prompts to connect to your ReMarkable tablet
+## Configuration
 
-## Project Structure
+### OpenWeather API
 
-- `main.py`: Main script to run the news summary generation and upload process. Generates PDF files
-- `main_epub.py`: Main script to run the news summary generation and upload process. Generates epub files
-- `parser.py`: Contains functions to fetch and parse RSS feeds
-- `scrapper.py`: Extracts full article content and images from web pages
-- `pdf_generator_latex.py`: Generates PDF using LaTeX (XeLaTeX)
-- `upload_remarkable.py`: Handles uploading files to ReMarkable tablet
-- `sources.json`: Contains RSS feed URLs for different news sources
-- `settings.py`: Configuration file for OpenWeatherMap API
+1. Sign up for a free account at [OpenWeatherMap](https://openweathermap.org/).
+2. Get your API key from the dashboard.
+3. Update `settings.py` with your API key and desired location:
+
+   ```python
+   OPENWEATHER_API_KEY = "your_api_key_here"
+   WEATHER_LAT = 40.4168  # Example: Madrid
+   WEATHER_LON = -3.7038  # Example: Madrid
+   ```
+
+### News Sources
+
+Edit `sources.json` to add or modify news sources:
+
+```json
+{
+  "Source Name": "https://example.com/rss-feed-url",
+  "Another Source": "https://another-example.com/rss-feed-url"
+}
+```
+
+### Email Settings (for sending EPUBs via email)
+
+Update `settings.py` with your email credentials:
+
+```python
+EMAIL_SENDER = "your_email@gmail.com"
+EMAIL_RECEIVER = "recipient@example.com"
+EMAIL_PASSWORD = "your_app_password"
+```
+
+Note: For Gmail, you'll need to use an App Password instead of your regular password.
+
+### reMarkable Tablet Setup
+
+The old reMarkable transfer API is deprecated due to changes in the cloud API. Now, SSH method is required:
+
+1. Enable SSH on your reMarkable tablet:
+   - Go to Settings > Help > Copyrights and licenses > General information > SSH
+   - Toggle "Enable SSH" to ON
+   - Note down the IP address and password shown
+
+2. Update `settings.py` with your reMarkable tablet's information:
+
+   ```python
+   REMARKABLE_SSH_HOST = "192.168.1.xxx"  # Your tablet's IP address
+   REMARKABLE_SSH_PASSWORD = "xxxxxxxxxx"  # Your tablet's password
+   MOUNT_POINT = "/path/to/mount/point/"  # Where you want to mount the tablet
+   ```
+
+3. Ensure you have `sshfs` installed on your system:
+   ```
+   sudo apt-get install sshfs  # For Ubuntu/Debian
+   ```
 
 ## Usage
 
-1. Update `sources.json` with your desired RSS feeds.
+Run the main script with desired options:
 
-2. Run the main script:
-   ```
-   python main.py
-   ```
+```
+python main.py -f [pdf|epub] -u [rmapi|pdf2rm|epub2rm|email]
+```
 
-   This will:
-   - Fetch articles from the specified RSS feeds
-   - Generate a PDF with the news summary and weather information using XeLaTeX
-   - Upload the PDF to your ReMarkable tablet
+- `-f` or `--format`: Choose between `pdf` or `epub` (default: pdf)
+- `-u` or `--upload`: Choose the upload method (default: stores them locally)
+  - `rmapi`: Use rmapi (deprecated)
+  - `pdf2rm`: Use pdf2rm script for PDFs
+  - `epub2rm`: Use epub2rm script for EPUBs
+  - `email`: Send via email
 
-## Customization
+Example:
+```
+python main.py -f epub -u email
+```
 
-- Modify `sources.json` to add or remove news sources
-- Adjust the time range for fetched articles in `main.py` (default is 24 hours)
-- Customize the PDF layout and styling in `pdf_generator_latex.py`
+This will generate EPUB files and send them via email.
 
-## Dependencies
+## Additional Settings
 
-Main dependencies include:
-- `requests`: For making HTTP requests
-- `beautifulsoup4`: For parsing HTML content
-- `Pillow`: For image processing
-- XeLaTeX: For PDF compilation
+You can modify other settings in `settings.py`:
 
-For a complete list of Python dependencies, see `requirements.txt`.
-
-## Notes
-
-- This project uses XeLaTeX for PDF generation. Ensure you have a LaTeX distribution with XeLaTeX installed on your system.
-- The project uses `rmapi` for uploading to ReMarkable. Make sure it's properly set up and authenticated.
-- In the future, both `main.py` and `main_epub.py` files will be merged and desired output will be selected with a flag (default will be epub).
-
-## Troubleshooting
-
-- If you encounter issues with PDF generation:
-  - Check that XeLaTeX is installed and accessible from the command line
-  - Run `xelatex --version` to verify the installation
-  - If using Windows, ensure the LaTeX installation directory is in your system's PATH
-- For upload problems, ensure `rmapi` is correctly installed and authenticated with your ReMarkable account
+- `ENABLE_NEWS_SUMMARY`: Set to `True` to enable AI summaries
+- `OLLAMA_MODEL`: Specify the Ollama model for summaries
+- `font`: Choose a font for PDF generation
 
 ## Contributing
 
