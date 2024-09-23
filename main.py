@@ -2,12 +2,16 @@ import json
 import os
 from datetime import datetime
 from pdf_generator_latex import generate_pdf
+from epub_generator import generate_epub  # Import the new EPUB generator
 from parser import process_rss_feed
-from upload_remarkable import generate_folder, upload_to_tablet
+from upload_remarkable import generate_folder, upload_to_tablet, send_epubs_using_epub2rm, send_pdfs_using_pdf2rm, send_epub_email
 import requests
-import settings  # Import the settings file
-from summarizer import summarize_article, format_summary
+import settings
+from summarizer import summarize_article, format_summary_epub, format_summary
+# from email_sender import send_email_with_attachment
 import sys
+import argparse
+import subprocess
 
 def ensure_correct_text(text):
     return text.replace(' ', '_')
@@ -48,7 +52,7 @@ def get_weather_data():
         print(f"Error fetching weather data: {e}")
     return None
 
-def main(upload=False):
+def main(args):
     # Create output folder if it doesn't exist
     output_folder = "output"
     os.makedirs(output_folder, exist_ok=True)
@@ -58,13 +62,13 @@ def main(upload=False):
         sources = json.load(f)
 
     current_date = datetime.now().strftime('%Y%m%d')
-    generated_pdfs = []
+    generated_files = []
 
     # Get weather data
     print('Getting weather data')
     weather_data = get_weather_data()
 
-    # Generate PDFs for each source
+    # Generate files for each source
     for source_name, rss_url in sources.items():
         articles = process_rss_feed(rss_url, hours=24)
         print(f'Obtained news from {source_name}')
@@ -75,38 +79,100 @@ def main(upload=False):
                     full_text = ' '.join([item[1] for item in article['full_content'] if item[0] == 'text'])
                     summary = summarize_article(full_text, model=settings.OLLAMA_MODEL)
                     if summary:
-                        formatted_summary = format_summary(summary)
+                        if args.format == 'epub':
+                            formatted_summary = format_summary_epub(summary)
+                        elif args.format == 'pdf':
+                            formatted_summary = format_summary(summary)
+                        else:
+                            formatted_summary = summary
                         article['full_content'].insert(0, ('text', formatted_summary))
 
             output_filename = f"{source_name}-{current_date}"
             output_filename = ensure_correct_text(output_filename)
             output_path = os.path.join(output_folder, output_filename)
-            generate_pdf({source_name: articles}, output_path, weather_data, settings.font)
-            generated_pdfs.append(f"{output_path}.pdf")
-            print(f'Generated PDF {output_filename}')
+            
+            if args.format == 'pdf':
+                generate_pdf({source_name: articles}, output_path, weather_data, settings.font)
+                generated_files.append(f"{output_path}.pdf")
+            elif args.format == 'epub':
+                generate_epub({source_name: articles}, output_path, weather_data, use_images=False if args.upload == 'email' else True)
+                generated_files.append(f"{output_path}.epub")
+            
+            print(f'Generated {args.format.upper()} {output_filename}')
             print('-'*10)
         else:
             print(f"No articles found for {source_name} in the last 24 hours.")
 
-    print('All PDFs generated')
-    if upload:
-        # Create folder in ReMarkable tablet
+    print(f'All {args.format.upper()}s generated')
+
+    ### Upload files to ReMarkable tablet or send via email
+    if args.upload == 'rmapi':  # deprecated
+        # Create folder in ReMarkable tablet using rmapi
         remarkable_folder = f"/news/{current_date}"
         if generate_folder(current_date):
-            # Upload PDFs to ReMarkable tablet
-            for pdf in generated_pdfs:
-                print(f'Uploading {pdf}')
-                upload_to_tablet(pdf, remarkable_folder)
+            # Upload files to ReMarkable tablet using rmapi
+            for file in generated_files:
+                print(f'Uploading {file}')
+                upload_to_tablet(file, remarkable_folder)
         else:
-            print("Failed to create folder in ReMarkable tablet. PDFs were not uploaded.")
-
+            print(f"Failed to create folder in ReMarkable tablet. {args.format.upper()}s were not uploaded.")
+    elif args.upload == 'pdf2rm' and args.format == 'pdf':
+        # Define SSH mount command
+        mount_command = f'echo "{settings.REMARKABLE_SSH_PASSWORD}" | sshfs root@{settings.REMARKABLE_SSH_HOST}:/ {settings.MOUNT_POINT} -o password_stdin'
+        # Run SSH mount command
+        subprocess.run(mount_command, shell=True, check=True)
+        # Upload PDFs using pdf2rm script
+        if send_pdfs_using_pdf2rm(generated_files):
+            print("All PDFs processed and sent to ReMarkable tablet successfully")
+        else:
+            print("Failed to process and send PDFs using pdf2rm script")
+        # Unmount ReMarkable tablet
+        unmount_command = f'fusermount -u {settings.MOUNT_POINT}'
+        subprocess.run(unmount_command, shell=True, check=True)
+    elif args.upload == 'epub2rm' and args.format == 'epub':
+        # Defbe SSH mount command
+        mount_command = f'echo "{settings.REMARKABLE_SSH_PASSWORD}" | sshfs root@{settings.REMARKABLE_SSH_HOST}:/ {settings.MOUNT_POINT} -o password_stdin'
+        # Run SSH mount command
+        subprocess.run(mount_command, shell=True, check=True)
+        # Upload EPUBs using epub2rm script
+        if send_epubs_using_epub2rm(generated_files):
+            print("All EPUBs processed and sent to ReMarkable tablet successfully")
+        else:
+            print("Failed to process and send EPUBs using epub2rm script")
+        # Unmount ReMarkable tablet
+        unmount_command = f'fusermount -u {settings.MOUNT_POINT}'
+        subprocess.run(unmount_command, shell=True, check=True)
+    elif args.upload == 'email':
+        # Send files via email
+        for file in generated_files:
+            if send_epub_email(sender_email=settings.EMAIL_SENDER, sender_password=settings.EMAIL_PASSWORD, recipient_email=settings.EMAIL_RECEIVER, subject=f"News {current_date}", body="Here is the news you requested.", epub_path=file):
+                print(f"Successfully sent {file} via email")
+            else:
+                print(f"Failed to send {file} via email")
 
 if __name__ == "__main__":
-    # Check for --upload flag
-    upload = False
-    if len(sys.argv) > 1 and sys.argv[1] == '--upload':
-        upload = True
-        print('Uploading PDFs to ReMarkable tablet')
+    parser = argparse.ArgumentParser(description="Generate and upload news files to ReMarkable tablet or send via email")
+    parser.add_argument("-f", "--format", choices=['pdf', 'epub'], default='pdf', help="File format to generate (pdf or epub)")
+    parser.add_argument("-u", "--upload", choices=['rmapi', 'pdf2rm', 'epub2rm', 'email'], help="Upload method or email")
+    args = parser.parse_args()
+
+    if args.upload == 'pdf2rm' and args.format != 'pdf':
+        print("Overwriting format to pdf to use pdf2rm upload method")
+        args.format = 'pdf'
+    elif args.upload == 'epub2rm' and args.format != 'epub':
+        print("Overwriting format to epub to use epub2rm upload method")
+        args.format = 'epub'
+    elif args.upload == 'email' and args.format != 'epub':
+        print("Overwriting format to epub to use email upload method")
+        args.format = 'epub'
+
+    print(f'Generating {args.format.upper()}s')
+    if args.upload:
+        if args.upload == 'email':
+            print('Files will be sent via email')
+        else:
+            print(f'Upload method: {args.upload}')
     else:
-        print('Generating PDFs locally')
-    main(upload=upload)
+        print('Files will be stored locally only')
+    
+    main(args)
