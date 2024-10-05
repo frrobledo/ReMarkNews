@@ -75,7 +75,7 @@ def main(args):
         if articles:
             if settings.ENABLE_NEWS_SUMMARY:
                 for article in articles:
-                    print(f'Summarizing article {article['title']}')
+                    print(f"Summarizing article {article['title']}")
                     full_text = ' '.join([item[1] for item in article['full_content'] if item[0] == 'text'])
                     summary = summarize_article(full_text, model=settings.OLLAMA_MODEL)
                     if summary:
@@ -95,7 +95,8 @@ def main(args):
                 generate_pdf({source_name: articles}, output_path, weather_data, settings.font)
                 generated_files.append(f"{output_path}.pdf")
             elif args.format == 'epub':
-                generate_epub({source_name: articles}, output_path, weather_data, use_images=False if args.upload == 'email' else True)
+                generate_epub({source_name: articles}, output_path, weather_data, use_images=False)  # Some documents were too large, use_images=False always
+                # generate_epub({source_name: articles}, output_path, weather_data, use_images=False if args.upload == 'email' else True)
                 generated_files.append(f"{output_path}.epub")
             
             print(f'Generated {args.format.upper()} {output_filename}')
@@ -108,7 +109,7 @@ def main(args):
     ### Upload files to ReMarkable tablet or send via email
     if args.upload == 'rmapi':  # deprecated
         # Create folder in ReMarkable tablet using rmapi
-        remarkable_folder = f"/news/{current_date}"
+        remarkable_folder = f"/News/{current_date}"
         if generate_folder(current_date):
             # Upload files to ReMarkable tablet using rmapi
             for file in generated_files:
